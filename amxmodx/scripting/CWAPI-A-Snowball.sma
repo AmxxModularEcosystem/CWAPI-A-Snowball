@@ -10,10 +10,12 @@ public stock const PluginAuthor[] = "ArKaNeMaN";
 public stock const PluginURL[] = "https://github.com/AmxxModularEcosystem/CWAPI-A-Snowball";
 public stock const PluginDescription[] = "[CustomWeaponsAPI-Ability] Snowball throwing.";
 
-// TODO: cfg
+// TODO: Ассеты в сборке
+
+// TODO: cfg? (cvars/params)
 #define KNIFE_STUCKED_TIME 3.0
 new const SNOWBALL_CLASSNAME[] = "cwapi_a_snowball";
-new const SNOWBALL_MODEL[] = "models/weapons/Snowball/w_snowball.mdl";
+new const SNOWBALL_MODEL[] = "models/weapons/cwapi/Snowball/w_snowball.mdl"; // TODO: from cwpn attrs?
 new SNOWBALL_MODEL_INDEX;
 
 new const ABILITY_NAME[] = "Snowball";

@@ -1,0 +1,11 @@
+{
+    "Reference": "weapon_hegrenade",
+    "Models": {
+        "View": "models/weapons/cwapi/Snowball/v_snowball.mdl",
+        "Player": "models/weapons/cwapi/Snowball/p_snowball.mdl",
+        "World": "models/weapons/cwapi/Snowball/w_snowball.mdl"
+    },
+    "Abilities": {
+        "Snowball": {}
+    }
+}
