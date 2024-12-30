@@ -17,11 +17,15 @@ public stock const PluginDescription[] = "[CustomWeaponsAPI-Ability] Snowball th
 new const SNOWBALL_CLASSNAME[] = "cwapi_a_snowball";
 new const SNOWBALL_MODEL[] = "models/weapons/cwapi/Snowball/w_snowball.mdl"; // TODO: from cwpn attrs?
 new SNOWBALL_MODEL_INDEX;
+new const SNOWBALL_SOUND_HIT[] = "weapons/cwapi/Snowball/byMayroN/hit.wav";
+new const SNOWBALL_SOUND_MISS[] = "weapons/cwapi/Snowball/byMayroN/miss.wav";
 
 new const ABILITY_NAME[] = "Snowball";
 
 public plugin_precache() {
     SNOWBALL_MODEL_INDEX = precache_model(SNOWBALL_MODEL);
+    precache_sound(SNOWBALL_SOUND_HIT);
+    precache_sound(SNOWBALL_SOUND_MISS);
 }
 
 public CWAPI_OnLoad() {
@@ -50,7 +54,6 @@ DamageBySnowball(const victimIndex, const attackerIndex, const snowballIndex) {
 
     if (rg_is_player_can_takedamage(victimIndex, attackerIndex)) {
         ExecuteHamB(Ham_TakeDamage, victimIndex, snowballIndex, attackerIndex, snowballDamage, DMG_FREEZE|DMG_NEVERGIB|DMG_PARALYZE);
-        // rh_emit_sound2(UserId, 0, CHAN_VOICE, HIT_SOUND, 0.3); // TODO
     }
 }
 
@@ -109,19 +112,21 @@ ThrowSnowball(
     SetThink(snowballIndex, "@OnSnowballThink");
 
     if (!FClassnameIs(victimIndex, "player")) {
+        rh_emit_sound2(snowballIndex, 0, CHAN_AUTO, SNOWBALL_SOUND_MISS, 0.3);
+
         set_entvar(snowballIndex, var_solid, SOLID_NOT);
         set_entvar(snowballIndex, var_movetype, MOVETYPE_NONE);
         set_entvar(snowballIndex, var_nextthink, get_gametime() + KNIFE_STUCKED_TIME);
         set_entvar(snowballIndex, var_velocity, Float:{0.0, 0.0, 0.0});
         set_entvar(snowballIndex, var_avelocity, Float:{0.0, 0.0, 0.0});
         // TODO: менять body на вмазанный снежок
+    } else {
+        rh_emit_sound2(snowballIndex, 0, CHAN_AUTO, SNOWBALL_SOUND_HIT, 0.3);
+        
+        DamageBySnowball(victimIndex, OwnerId, snowballIndex);
 
-        // rh_emit_sound2(snowballIndex, 0, CHAN_AUTO, HITWALL_SOUND, 0.3); // TODO
-        return;
+        set_entvar(snowballIndex, var_nextthink, get_gametime() + 0.01);
     }
-    set_entvar(snowballIndex, var_nextthink, get_gametime() + 0.01);
-
-    DamageBySnowball(victimIndex, OwnerId, snowballIndex);
 }
 
 @OnSnowballThink(const EntId) {
