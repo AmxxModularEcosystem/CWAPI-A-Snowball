@@ -5,7 +5,12 @@
         "Player": "models/weapons/cwapi/Snowball/p_snowball.mdl",
         "World": "models/weapons/cwapi/Snowball/w_snowball.mdl"
     },
+    "Grenade": {
+        "PreventFITH": true
+    },
     "Abilities": {
-        "Snowball": {}
+        "Snowball": {
+            "Damage": 52.0
+        }
     }
 }

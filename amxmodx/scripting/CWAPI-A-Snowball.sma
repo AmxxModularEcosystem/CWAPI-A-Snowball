@@ -24,6 +24,7 @@ new const ABILITY_NAME[] = "Snowball";
 
 public plugin_precache() {
     SNOWBALL_MODEL_INDEX = precache_model(SNOWBALL_MODEL);
+
     precache_sound(SNOWBALL_SOUND_HIT);
     precache_sound(SNOWBALL_SOUND_MISS);
 }
@@ -34,9 +35,11 @@ public CWAPI_OnLoad() {
     new T_WeaponAbility:ability = CWAPI_Abilities_Register(ABILITY_NAME);
     CWAPI_Abilities_AddParams(ability,
         "Damage", "Float", true,
-        "MeltTime", "Float", false,
         "Speed", "Float", false,
-        "Gravity", "Float", false,
+        "Gravity", "Float", false
+    );
+    CWAPI_Abilities_AddParams(ability,
+        "MeltTime", "Float", false,
         "FreezeChance", "Float", false
     );
 
@@ -132,7 +135,7 @@ ThrowSnowball(
     SetThink(snowballIndex, "@OnSnowballThink");
 
     if (!FClassnameIs(victimIndex, "player")) {
-        rh_emit_sound2(snowballIndex, 0, CHAN_AUTO, SNOWBALL_SOUND_MISS, 0.3);
+        rh_emit_sound2(snowballIndex, 0, CHAN_AUTO, SNOWBALL_SOUND_MISS, 1.0);
 
         set_entvar(snowballIndex, var_solid, SOLID_NOT);
         set_entvar(snowballIndex, var_movetype, MOVETYPE_NONE);
@@ -141,7 +144,7 @@ ThrowSnowball(
         set_entvar(snowballIndex, var_avelocity, Float:{0.0, 0.0, 0.0});
         // TODO: менять body на вмазанный снежок
     } else {
-        rh_emit_sound2(snowballIndex, 0, CHAN_AUTO, SNOWBALL_SOUND_HIT, 0.3);
+        rh_emit_sound2(snowballIndex, 0, CHAN_AUTO, SNOWBALL_SOUND_HIT, 1.0);
 
         DamageBySnowball(victimIndex, OwnerId, snowballIndex);
 
