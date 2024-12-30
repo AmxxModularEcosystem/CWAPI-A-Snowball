@@ -32,16 +32,35 @@ public CWAPI_OnLoad() {
     register_plugin(PluginName, PluginVersion, PluginAuthor);
     
     new T_WeaponAbility:ability = CWAPI_Abilities_Register(ABILITY_NAME);
-    // CWAPI_Abilities_AddParams(ability,
-    //      TODO: params
-    // );
+    CWAPI_Abilities_AddParams(ability,
+        "Damage", "Float", true,
+        "MeltTime", "Float", false,
+        "Speed", "Float", false,
+        "Gravity", "Float", false,
+        "FreezeChance", "Float", false
+    );
 
     CWAPI_Abilities_AddEventListener(ability, CWeapon_OnPlayerThrowGrenade, "@OnPlayerThrowGrenade");
 }
 
-@OnPlayerThrowGrenade(const T_CustomWeapon:weapon, const itemIndex, const playerIndex) {
-    // TODO: params
-    ThrowSnowball(playerIndex);
+@OnPlayerThrowGrenade(const T_CustomWeapon:weapon, const itemIndex, const playerIndex, Float:vecSrc[3], Float:vecThrow[3], &Float:time, const event, const Trie:abilityParams) {
+    new Float:damage;
+    TrieGetCell(abilityParams, "Damage", damage);
+
+    // TODO
+    new Float:meltTime = 3.0;
+    TrieGetCell(abilityParams, "MeltTime", meltTime);
+
+    new Float:speed = 1500.0;
+    TrieGetCell(abilityParams, "Speed", speed);
+
+    new Float:gravity = 0.5;
+    TrieGetCell(abilityParams, "Gravity", gravity);
+
+    new Float:freezeChance = 0.0;
+    TrieGetCell(abilityParams, "FreezeChance", freezeChance);
+
+    ThrowSnowball(playerIndex, damage, speed, gravity, freezeChance);
     return CWAPI_STOP_MAIN;
 }
 
@@ -63,7 +82,8 @@ ThrowSnowball(
     const playerIndex,
     const Float:damage = 45.0,
     const Float:velocity = 1500.0,
-    const Float:gravity = 0.5
+    const Float:gravity = 0.5,
+    const Float:freezeChance = 0.0 // TODO
 ) {
     new Float:playerOrigin[3];
     get_entvar(playerIndex, var_origin, playerOrigin);
@@ -86,8 +106,8 @@ ThrowSnowball(
 
     new Float:startSnowballOrigin[3];
     xs_vec_add(playerOrigin, playerViewOfs, startSnowballOrigin)
-    set_entvar(snowballIndex, var_origin, startSnowballOrigin);
     
+    set_entvar(snowballIndex, var_origin, startSnowballOrigin);
     set_entvar(snowballIndex, var_movetype, MOVETYPE_TOSS);
     set_entvar(snowballIndex, var_solid, SOLID_TRIGGER);
     set_entvar(snowballIndex, var_gravity, gravity);
@@ -122,7 +142,7 @@ ThrowSnowball(
         // TODO: менять body на вмазанный снежок
     } else {
         rh_emit_sound2(snowballIndex, 0, CHAN_AUTO, SNOWBALL_SOUND_HIT, 0.3);
-        
+
         DamageBySnowball(victimIndex, OwnerId, snowballIndex);
 
         set_entvar(snowballIndex, var_nextthink, get_gametime() + 0.01);
