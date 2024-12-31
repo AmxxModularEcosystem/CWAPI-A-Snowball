@@ -63,26 +63,15 @@ public CWAPI_OnLoad() {
     new Float:freezeChance = 0.0;
     TrieGetCell(abilityParams, "FreezeChance", freezeChance);
 
-    ThrowSnowball(playerIndex, damage, speed, gravity, freezeChance);
+    ThrowSnowball(playerIndex, weapon, damage, speed, gravity, freezeChance);
     return CWAPI_STOP_MAIN;
-}
-
-DamageBySnowball(const victimIndex, const attackerIndex, const snowballIndex) {
-    if (!is_user_alive(victimIndex)) {
-        return;
-    }
-
-    new Float:snowballDamage = get_entvar(snowballIndex, var_dmg);
-
-    if (rg_is_player_can_takedamage(victimIndex, attackerIndex)) {
-        ExecuteHamB(Ham_TakeDamage, victimIndex, snowballIndex, attackerIndex, snowballDamage, DMG_FREEZE|DMG_NEVERGIB|DMG_PARALYZE);
-    }
 }
 
 // https://github.com/AmxxModularEcosystem/CWAPI-A-ThrowKnife/blob/master/amxmodx/scripting/CWAPI-A-ThrowKnife.sma
 
 ThrowSnowball(
     const playerIndex,
+    const T_CustomWeapon:weaponIndex,
     const Float:damage = 45.0,
     const Float:velocity = 1500.0,
     const Float:gravity = 0.5,
@@ -118,11 +107,27 @@ ThrowSnowball(
     set_entvar(snowballIndex, var_framerate, 1.0);
 
     set_entvar(snowballIndex, var_owner, playerIndex);
+    set_entvar(snowballIndex, var_impulse, weaponIndex);
     set_entvar(snowballIndex, var_dmg, damage);
     SetEntSize(snowballIndex, Float:{-2.0, -2.0, -2.0}, Float:{2.0, 2.0, 2.0});
     set_entvar(snowballIndex, var_nextthink, get_gametime() + 0.1);
 
     SetTouch(snowballIndex, "@OnSnowballTouch");
+
+    return snowballIndex;
+}
+
+DamageBySnowball(const victimIndex, const attackerIndex, const snowballIndex) {
+    if (!is_user_alive(victimIndex)) {
+        return;
+    }
+
+    new Float:snowballDamage = get_entvar(snowballIndex, var_dmg);
+    new T_CustomWeapon:weaponIndex = get_entvar(snowballIndex, var_impulse);
+
+    if (rg_is_player_can_takedamage(victimIndex, attackerIndex)) {
+        CWAPI_Weapons_EmitDamage(weaponIndex, victimIndex, snowballIndex, attackerIndex, snowballDamage, DMG_FREEZE|DMG_NEVERGIB|DMG_PARALYZE);
+    }
 }
 
 @OnSnowballTouch(const snowballIndex, const victimIndex) {
