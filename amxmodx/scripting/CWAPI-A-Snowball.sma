@@ -1,5 +1,6 @@
 #include <amxmodx>
 #include <reapi>
+#include <fakemeta>
 #include <hamsandwich>
 #include <xs>
 #include <cwapi>
@@ -15,8 +16,14 @@ public stock const PluginDescription[] = "[CustomWeaponsAPI-Ability] Snowball th
 // TODO: cfg? (cvars/params)
 #define KNIFE_STUCKED_TIME 3.0
 new const SNOWBALL_CLASSNAME[] = "cwapi_a_snowball";
-new const SNOWBALL_MODEL[] = "models/weapons/cwapi/Snowball/w_snowball.mdl"; // TODO: from cwpn attrs?
+new const SNOWBALL_MODEL[] = "models/weapons/cwapi/Snowball/w_snowball.mdl";
 new SNOWBALL_MODEL_INDEX;
+new const SNOWBALL_STAIN_MODEL[] = "models/weapons/cwapi/Snowball/snowball_stain_byMayroN.mdl";
+new SNOWBALL_STAIN_MODEL_INDEX;
+new const SNOWBALL_GIBS_MODEL[] = "models/weapons/cwapi/Snowball/snowball_gibs_byMayroN.mdl";
+new SNOWBALL_GIBS_MODEL_INDEX;
+new const SNOWBALL_TRAIL_SPRITE[] = "sprites/smoke.spr";
+new SNOWBALL_TRAIL_SPRITE_INDEX;
 new const SNOWBALL_SOUND_HIT[] = "weapons/cwapi/Snowball/byMayroN/hit.wav";
 new const SNOWBALL_SOUND_MISS[] = "weapons/cwapi/Snowball/byMayroN/miss.wav";
 
@@ -24,6 +31,9 @@ new const ABILITY_NAME[] = "Snowball";
 
 public plugin_precache() {
     SNOWBALL_MODEL_INDEX = precache_model(SNOWBALL_MODEL);
+    SNOWBALL_STAIN_MODEL_INDEX = precache_model(SNOWBALL_STAIN_MODEL);
+    SNOWBALL_TRAIL_SPRITE_INDEX = precache_model(SNOWBALL_TRAIL_SPRITE);
+    SNOWBALL_GIBS_MODEL_INDEX = precache_model(SNOWBALL_GIBS_MODEL);
 
     precache_sound(SNOWBALL_SOUND_HIT);
     precache_sound(SNOWBALL_SOUND_MISS);
@@ -36,7 +46,8 @@ public CWAPI_OnLoad() {
     CWAPI_Abilities_AddParams(ability,
         "Damage", "Float", true,
         "Speed", "Float", false,
-        "Gravity", "Float", false
+        "Gravity", "Float", false,
+        "WithTrail", "Boolean", false
     );
 
     CWAPI_Abilities_AddEventListener(ability, CWeapon_OnPlayerThrowGrenade, "@OnPlayerThrowGrenade");
@@ -52,7 +63,25 @@ public CWAPI_OnLoad() {
     new Float:gravity = 0.5;
     TrieGetCell(abilityParams, "Gravity", gravity);
 
-    ThrowSnowball(playerIndex, weapon, damage, speed, gravity);
+    new bool:withTrail = false;
+    TrieGetCell(abilityParams, "WithTrail", withTrail);
+
+    new snowballIndex = ThrowSnowball(playerIndex, weapon, damage, speed, gravity);
+
+    if (withTrail) {
+        message_begin(MSG_BROADCAST, SVC_TEMPENTITY);
+        write_byte(TE_BEAMFOLLOW);
+        write_short(snowballIndex); // Entity index
+        write_short(SNOWBALL_TRAIL_SPRITE_INDEX); // Sprite index
+        write_byte(20); // Life time
+        write_byte(3); // Width
+        write_byte(115); // R
+        write_byte(155); // G
+        write_byte(208); // B
+        write_byte(255); // Brightness
+        message_end();
+    }
+
     return CWAPI_STOP_MAIN;
 }
 
@@ -83,6 +112,8 @@ ThrowSnowball(
     angle_vector(playerViewAngle, ANGLEVECTOR_FORWARD, snowballVelocity);
     xs_vec_mul_scalar(snowballVelocity, velocity, snowballVelocity);
     set_entvar(snowballIndex, var_velocity, snowballVelocity);
+
+    set_entvar(snowballIndex, var_angles, playerViewAngle);
 
     new Float:startSnowballOrigin[3];
     xs_vec_add(playerOrigin, playerViewOfs, startSnowballOrigin)
@@ -127,22 +158,65 @@ DamageBySnowball(const victimIndex, const attackerIndex, const snowballIndex) {
     SetTouch(snowballIndex, "");
     SetThink(snowballIndex, "@OnSnowballThink");
 
-    if (!FClassnameIs(victimIndex, "player")) {
-        rh_emit_sound2(snowballIndex, 0, CHAN_AUTO, SNOWBALL_SOUND_MISS, 1.0);
+    new Float:snowballOrigin[3];
+    get_entvar(snowballIndex, var_origin, snowballOrigin);
 
-        set_entvar(snowballIndex, var_solid, SOLID_NOT);
-        set_entvar(snowballIndex, var_movetype, MOVETYPE_NONE);
-        set_entvar(snowballIndex, var_nextthink, get_gametime() + KNIFE_STUCKED_TIME);
-        set_entvar(snowballIndex, var_velocity, Float:{0.0, 0.0, 0.0});
-        set_entvar(snowballIndex, var_avelocity, Float:{0.0, 0.0, 0.0});
-        // TODO: менять body на вмазанный снежок
-    } else {
+    if (FClassnameIs(victimIndex, "player")) {
         rh_emit_sound2(snowballIndex, 0, CHAN_AUTO, SNOWBALL_SOUND_HIT, 1.0);
 
         DamageBySnowball(victimIndex, OwnerId, snowballIndex);
 
         set_entvar(snowballIndex, var_nextthink, get_gametime() + 0.01);
+    } else {
+        // rh_emit_sound2(snowballIndex, 0, CHAN_AUTO, SNOWBALL_SOUND_MISS, 1.0);
+
+        set_entvar(snowballIndex, var_solid, SOLID_NOT);
+        set_entvar(snowballIndex, var_movetype, MOVETYPE_NONE);
+        set_entvar(snowballIndex, var_nextthink, get_gametime() + KNIFE_STUCKED_TIME);
+        set_entvar(snowballIndex, var_velocity, Float:{0.0, 0.0, 0.0});
+
+        new Float:snowballDirection[3];
+        get_entvar(snowballIndex, var_angles, snowballDirection);
+        angle_vector(snowballDirection, ANGLEVECTOR_FORWARD, snowballDirection);
+        xs_vec_normalize(snowballDirection, snowballDirection);
+        xs_vec_mul_scalar(snowballDirection, 10.0, snowballDirection);
+
+        new Float:traceToOrigin[3];
+        xs_vec_add(snowballOrigin, snowballDirection, traceToOrigin);
+
+        new traceResult;
+        engfunc(EngFunc_TraceLine, snowballOrigin, traceToOrigin, IGNORE_MONSTERS, snowballIndex, traceResult);
+
+        new Float:normalToSurface[3];
+        get_tr2(traceResult, TR_vecPlaneNormal, normalToSurface);
+
+        vector_to_angle(normalToSurface, normalToSurface);
+        
+        set_entvar(snowballIndex, var_modelindex, SNOWBALL_STAIN_MODEL_INDEX);
+        set_entvar(snowballIndex, var_model, SNOWBALL_STAIN_MODEL);
+        set_entvar(snowballIndex, var_angles, normalToSurface);
     }
+    
+    message_begin(MSG_BROADCAST, SVC_TEMPENTITY, {0,0,0}, 0);
+    {
+        write_byte(TE_BREAKMODEL);
+        write_coord_f(snowballOrigin[0]); // x
+        write_coord_f(snowballOrigin[1]); // y
+        write_coord_f(snowballOrigin[2]); // z
+        write_coord_f(16.0); // size x
+        write_coord_f(16.0); // size y
+        write_coord_f(16.0); // size z
+        write_coord(15); // velocity x
+        write_coord(15); // velocity y
+        write_coord(15); // velocity z
+        write_byte(10); // random velocity
+        write_short(SNOWBALL_GIBS_MODEL_INDEX); // model index that you want to break
+        write_byte(random_num(5, 10)); // count
+        write_byte(5); // life
+        write_byte(BREAK_2); // flags
+    }
+    message_end();
+    rh_emit_sound2(snowballIndex, 0, CHAN_AUTO, SNOWBALL_SOUND_MISS, 1.0);
 }
 
 @OnSnowballThink(const EntId) {

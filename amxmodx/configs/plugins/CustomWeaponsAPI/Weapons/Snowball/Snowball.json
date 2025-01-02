@@ -10,7 +10,8 @@
     },
     "Abilities": {
         "Snowball": {
-            "Damage": 10.0
+            "Damage": 10.0,
+            "WithTrail": true
         },
         "Freeze": {
             "Chance": 0.5,
