@@ -118,6 +118,7 @@ jobs:
         run: |
           mkdir -p publish/${{ env.PACKAGE_NAME }}/addons
           mv amxmodx/ publish/${{ env.PACKAGE_NAME }}/addons
+          mv assets/* publish/${{ env.PACKAGE_NAME }}/
 
           if [ ! -z "${STORE_README}" ]; then
             mv README.md publish/
