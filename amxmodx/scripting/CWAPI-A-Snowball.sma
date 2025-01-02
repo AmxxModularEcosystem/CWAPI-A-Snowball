@@ -5,7 +5,7 @@
 #include <cwapi>
 
 public stock const PluginName[] = "[CWAPI-A] Snowball";
-public stock const PluginVersion[] = "dev";
+public stock const PluginVersion[] = "1.0.0";
 public stock const PluginAuthor[] = "ArKaNeMaN";
 public stock const PluginURL[] = "https://github.com/AmxxModularEcosystem/CWAPI-A-Snowball";
 public stock const PluginDescription[] = "[CustomWeaponsAPI-Ability] Snowball throwing.";
@@ -38,10 +38,6 @@ public CWAPI_OnLoad() {
         "Speed", "Float", false,
         "Gravity", "Float", false
     );
-    CWAPI_Abilities_AddParams(ability,
-        "MeltTime", "Float", false,
-        "FreezeChance", "Float", false
-    );
 
     CWAPI_Abilities_AddEventListener(ability, CWeapon_OnPlayerThrowGrenade, "@OnPlayerThrowGrenade");
 }
@@ -50,20 +46,13 @@ public CWAPI_OnLoad() {
     new Float:damage;
     TrieGetCell(abilityParams, "Damage", damage);
 
-    // TODO
-    new Float:meltTime = 3.0;
-    TrieGetCell(abilityParams, "MeltTime", meltTime);
-
     new Float:speed = 1500.0;
     TrieGetCell(abilityParams, "Speed", speed);
 
     new Float:gravity = 0.5;
     TrieGetCell(abilityParams, "Gravity", gravity);
 
-    new Float:freezeChance = 0.0;
-    TrieGetCell(abilityParams, "FreezeChance", freezeChance);
-
-    ThrowSnowball(playerIndex, weapon, damage, speed, gravity, freezeChance);
+    ThrowSnowball(playerIndex, weapon, damage, speed, gravity);
     return CWAPI_STOP_MAIN;
 }
 
@@ -74,8 +63,7 @@ ThrowSnowball(
     const T_CustomWeapon:weaponIndex,
     const Float:damage = 45.0,
     const Float:velocity = 1500.0,
-    const Float:gravity = 0.5,
-    const Float:freezeChance = 0.0 // TODO
+    const Float:gravity = 0.5
 ) {
     new Float:playerOrigin[3];
     get_entvar(playerIndex, var_origin, playerOrigin);

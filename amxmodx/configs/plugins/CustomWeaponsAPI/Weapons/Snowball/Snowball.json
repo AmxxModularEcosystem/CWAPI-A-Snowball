@@ -10,7 +10,12 @@
     },
     "Abilities": {
         "Snowball": {
-            "Damage": 52.0
+            "Damage": 10.0
+        },
+        "Freeze": {
+            "Chance": 0.5,
+            "Duration": 5.0,
+            "SpeedMultiplier": 0.5
         }
     }
 }
