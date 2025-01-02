@@ -72,7 +72,7 @@ public client_disconnected(playerIndex) {
     new Float:duration;
     TrieGetCell(abilityParams, "Duration", duration);
 
-    new Float:speedMultiplier;
+    new Float:speedMultiplier = 0.5;
     TrieGetCell(abilityParams, "SpeedMultiplier", speedMultiplier);
 
     FreezePlayer(victimIndex, duration, speedMultiplier);
