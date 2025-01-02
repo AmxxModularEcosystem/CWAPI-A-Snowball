@@ -68,7 +68,7 @@ jobs:
       - name: Setup CustomWeaponsAPI includes
         env:
           REPO: AmxxModularEcosystem/CustomWeaponsAPI
-          # TAG: ${{ env.CWAPI_TAG }}
+          TAG: ${{ env.CWAPI_TAG }}
           OUTPUT_VAR_NAME: CWAPI_INCLUDE_PATH
         run: |
           mkdir -p dep/${REPO}

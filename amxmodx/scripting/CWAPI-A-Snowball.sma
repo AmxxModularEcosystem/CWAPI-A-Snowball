@@ -13,8 +13,7 @@ public stock const PluginDescription[] = "[CustomWeaponsAPI-Ability] Snowball th
 
 // TODO: Ассеты в сборке
 
-// TODO: cfg? (cvars/params)
-#define KNIFE_STUCKED_TIME 3.0
+#define SNOWBALL_MELT_TIME 3.0
 new const SNOWBALL_CLASSNAME[] = "cwapi_a_snowball";
 new const SNOWBALL_MODEL[] = "models/weapons/cwapi/Snowball/w_snowball.mdl";
 new SNOWBALL_MODEL_INDEX;
@@ -163,16 +162,17 @@ DamageBySnowball(const victimIndex, const attackerIndex, const snowballIndex) {
 
     if (FClassnameIs(victimIndex, "player")) {
         rh_emit_sound2(snowballIndex, 0, CHAN_AUTO, SNOWBALL_SOUND_HIT, 1.0);
+        rh_emit_sound2(snowballIndex, 0, CHAN_AUTO, SNOWBALL_SOUND_MISS, 0.5);
 
         DamageBySnowball(victimIndex, OwnerId, snowballIndex);
 
         set_entvar(snowballIndex, var_nextthink, get_gametime() + 0.01);
     } else {
-        // rh_emit_sound2(snowballIndex, 0, CHAN_AUTO, SNOWBALL_SOUND_MISS, 1.0);
+        rh_emit_sound2(snowballIndex, 0, CHAN_AUTO, SNOWBALL_SOUND_MISS, 1.0);
 
         set_entvar(snowballIndex, var_solid, SOLID_NOT);
         set_entvar(snowballIndex, var_movetype, MOVETYPE_NONE);
-        set_entvar(snowballIndex, var_nextthink, get_gametime() + KNIFE_STUCKED_TIME);
+        set_entvar(snowballIndex, var_nextthink, get_gametime() + SNOWBALL_MELT_TIME);
         set_entvar(snowballIndex, var_velocity, Float:{0.0, 0.0, 0.0});
 
         new Float:snowballDirection[3];
@@ -216,7 +216,6 @@ DamageBySnowball(const victimIndex, const attackerIndex, const snowballIndex) {
         write_byte(BREAK_2); // flags
     }
     message_end();
-    rh_emit_sound2(snowballIndex, 0, CHAN_AUTO, SNOWBALL_SOUND_MISS, 1.0);
 }
 
 @OnSnowballThink(const EntId) {
